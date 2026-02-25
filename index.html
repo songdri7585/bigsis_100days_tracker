@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="100 Days">
+<meta name="theme-color" content="#0e0e0e">
+<title>100-Day Challenge</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #181818;
+    --card: #1f1f1f;
+    --accent: #f0c040;
+    --text: #f0ede6;
+    --muted: #777;
+    --done-bg: #1a2e22;
+    --done: #5cb87a;
+    --border: #2a2a2a;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--bg);
+    padding: calc(var(--safe-top) + 1rem) 1.2rem 1rem;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.9rem;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+  h1 small {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 400;
+    margin-bottom: 2px;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 1.2rem;
+  }
+  .stat {
+    font-size: 0.62rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .stat strong {
+    display: block;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    color: var(--text);
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: none;
+    line-height: 1.1;
+  }
+  .stat strong.accent { color: var(--accent); }
+
+  .progress-wrap {
+    margin-top: 0.7rem;
+    background: var(--border);
+    border-radius: 99px;
+    height: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--done), var(--accent));
+    border-radius: 99px;
+    transition: width 0.5s ease;
+  }
+
+  /* GRID */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    padding: 1rem;
+    padding-bottom: calc(var(--safe-bottom) + 1rem);
+  }
+
+  .day-card {
+    aspect-ratio: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s;
+    position: relative;
+    padding: 4px;
+  }
+
+  .day-card:active { transform: scale(0.92); }
+
+  .day-card.done {
+    background: var(--done-bg);
+    border-color: var(--done);
+  }
+
+  .day-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--muted);
+    line-height: 1;
+  }
+
+  .day-card.done .day-num { color: var(--done); }
+
+  .day-check {
+    font-size: 0.55rem;
+    color: var(--done);
+    margin-top: 2px;
+    opacity: 0;
+  }
+  .day-card.done .day-check { opacity: 1; }
+
+  .day-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--done);
+    margin-top: 3px;
+    opacity: 0;
+  }
+  .day-card.done .day-dot { opacity: 1; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 50;
+    align-items: flex-end;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    padding: 1.5rem 1.4rem calc(var(--safe-bottom) + 1.5rem);
+    width: 100%;
+    max-width: 480px;
+    animation: slideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    margin: 0 auto 1.2rem;
+  }
+
+  .modal h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: var(--accent);
+    margin-bottom: 1.2rem;
+  }
+
+  .modal label {
+    display: block;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+
+  .modal input, .modal textarea {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    outline: none;
+    -webkit-appearance: none;
+    transition: border-color 0.2s;
+  }
+  .modal input:focus, .modal textarea:focus { border-color: var(--accent); }
+  .modal textarea { resize: none; height: 80px; }
+
+  .modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 0.9rem;
+    border-radius: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border: none;
+    font-weight: 500;
+    transition: opacity 0.15s;
+  }
+  .btn:active { opacity: 0.8; }
+  .btn-primary { background: var(--accent); color: #111; }
+  .btn-danger { background: transparent; border: 1px solid #c0504030; color: #e07060; }
+  .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+
+  .btn-row { display: flex; gap: 0.6rem; }
+  .btn-row .btn { flex: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <h1><small>Big Sis • YouTube</small>100-Day Challenge</h1>
+    <div class="stat" style="text-align:right">
+      <strong class="accent" id="statDone">0</strong>
+      done
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat"><strong id="statLeft">100</strong>Left</div>
+    <div class="stat"><strong id="statStreak">0</strong>Streak</div>
+    <div class="stat"><strong id="statLast">—</strong>Last</div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+</header>
+
+<div class="grid" id="grid"></div>
+
+<div class="modal-overlay" id="overlay">
+  <div class="modal" id="modal">
+    <div class="modal-handle"></div>
+    <h2 id="modalTitle">Day 1</h2>
+    <label>Date</label>
+    <input type="date" id="modalDate">
+    <label>Notes (optionnel)</label>
+    <textarea id="modalNote" placeholder="Comment ça s'est passé ?"></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="btnSave">✓ Marquer comme fait</button>
+      <div class="btn-row">
+        <button class="btn btn-danger" id="btnUndo">Annuler</button>
+        <button class="btn btn-cancel" id="btnClose">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY = 'bigsis_100day_v2';
+let data = {};
+let currentDay = null;
+
+function load() {
+  try { data = JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e) { data = {}; }
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(data)); }
+
+function fmt(iso) {
+  if (!iso) return '';
+  const [y,m,d] = iso.split('-');
+  const mo = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
+  return `${mo[+m-1]} ${+d}`;
+}
+
+function streak() {
+  const days = Object.keys(data).map(Number).sort((a,b) => b-a);
+  if (!days.length) return 0;
+  let s = 0, exp = days[0];
+  for (let d of days) { if (d === exp) { s++; exp--; } else break; }
+  return s;
+}
+
+function render() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  for (let i = 1; i <= 100; i++) {
+    const e = data[i];
+    const c = document.createElement('div');
+    c.className = 'day-card' + (e ? ' done' : '');
+    c.innerHTML = `<div class="day-num">${i}</div><div class="day-dot"></div>`;
+    c.addEventListener('click', () => open(i));
+    grid.appendChild(c);
+  }
+  updateStats();
+}
+
+function updateStats() {
+  const done = Object.keys(data).length;
+  document.getElementById('statDone').textContent = done;
+  document.getElementById('statLeft').textContent = 100 - done;
+  document.getElementById('statStreak').textContent = streak();
+  document.getElementById('progressFill').style.width = done + '%';
+  const days = Object.keys(data).map(Number).sort((a,b) => b-a);
+  document.getElementById('statLast').textContent = days.length ? fmt(data[days[0]].date) || `J${days[0]}` : '—';
+}
+
+function open(day) {
+  currentDay = day;
+  const e = data[day] || {};
+  document.getElementById('modalTitle').textContent = `Jour ${day}`;
+  document.getElementById('modalDate').value = e.date || new Date().toISOString().split('T')[0];
+  document.getElementById('modalNote').value = e.note || '';
+  document.getElementById('btnUndo').style.display = data[day] ? '' : 'none';
+  document.getElementById('overlay').classList.add('open');
+}
+
+function close() {
+  document.getElementById('overlay').classList.remove('open');
+  currentDay = null;
+}
+
+document.getElementById('btnSave').onclick = () => {
+  data[currentDay] = { date: document.getElementById('modalDate').value, note: document.getElementById('modalNote').value.trim() };
+  save(); render(); close();
+};
+document.getElementById('btnUndo').onclick = () => {
+  delete data[currentDay]; save(); render(); close();
+};
+document.getElementById('btnClose').onclick = close;
+document.getElementById('overlay').addEventListener('click', e => { if (e.target === document.getElementById('overlay')) close(); });
+
+load(); render();
+</script>
+</body>
+</html>
